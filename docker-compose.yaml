@@ -1,0 +1,41 @@
+services:
+  glpi:
+    image: diouxx/glpi
+    container_name: glpi
+    hostname: glpi
+    restart: unless-stopped
+    ports:
+      - "8200:80"
+    volumes:
+      - ./glpi/:/var/www/html/glpi
+    environment:
+      - TIMEZONE=${TZ:-America/La_Paz}
+    depends_on:
+      - db
+
+  db:
+    image: mariadb
+    container_name: mysql-glpi
+    hostname: mysql
+    restart: unless-stopped
+    ports:
+      - ${PORT:-3306}:3306
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MSQL_ROOT_PASSWORD:-rglpi}
+      MYSQL_DATABASE: ${MSQL_DATABASE:-glpi}
+      MYSQL_USER: ${MSQL_USER:-glpi}
+      MYSQL_PASSWORD: ${MSQL_PASSWORD:-glpi}
+    healthcheck:
+      interval: 30s
+      retries: 3
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--su-mysql",
+          "--connect",
+          "--innodb_initialized",
+        ]
+      timeout: 30s
